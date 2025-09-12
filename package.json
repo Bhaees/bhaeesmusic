@@ -24,5 +24,8 @@
         "backgroundColor": "#000000"
       }
     }
+  },
+  "dependencies": {
+    "react-native-svg": "^15.13.0"
   }
 }
