@@ -27,6 +27,15 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "57fbdcf7-78ff-44ae-a86f-a930fed0a1f2"
+      }
+    },
+    "android": {
+      "package": "com.bhaees.boltexponativewind"
     }
   }
 }
