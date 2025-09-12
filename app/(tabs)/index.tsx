@@ -6,6 +6,7 @@ import { Song } from '@/types/database';
 import SongCard from '@/components/SongCard';
 import MusicPlayer from '@/components/MusicPlayer';
 import { useMusic } from '@/contexts/MusicContext';
+import Logo from '@/components/Logo';
 
 export default function HomeScreen() {
   const [songs, setSongs] = useState<Song[]>([]);
@@ -62,6 +63,11 @@ export default function HomeScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
+          <View style={styles.header}>
+            <Logo size="medium" showText={false} />
+            <Text style={styles.appName}>BhaeBeats</Text>
+          </View>
+          
           <Text style={styles.greeting}>Good evening</Text>
           <Text style={styles.title}>Featured Music</Text>
           
@@ -101,6 +107,18 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingTop: 60,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    gap: 12,
+  },
+  appName: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   greeting: {
     color: '#fff',

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { Link, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/contexts/AuthContext';
+import Logo from '@/components/Logo';
 
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
@@ -44,7 +45,7 @@ export default function RegisterScreen() {
   return (
     <LinearGradient colors={['#1a1a1a', '#2d1b69']} style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.logo}>MyMusic Pro</Text>
+        <Logo size="large" />
         <Text style={styles.subtitle}>Create your account</Text>
         
         <View style={styles.form}>
@@ -111,21 +112,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
-  logo: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
   subtitle: {
     fontSize: 16,
     color: '#b3b3b3',
     textAlign: 'center',
-    marginBottom: 48,
+    marginBottom: 24,
+    marginTop: 16,
   },
   form: {
     width: '100%',
+    marginTop: 24,
   },
   input: {
     backgroundColor: '#333',
