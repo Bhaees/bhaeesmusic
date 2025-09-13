@@ -1,15 +1,17 @@
 import { Tabs } from 'expo-router';
 import { Chrome as Home, Search, Download, User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect } from 'react';
 
 export default function TabLayout() {
   const { session, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && !session) {
-      router.replace('/(auth)/login');
+    if (!loading) {
+      if (!session) {
+        router.replace('/(auth)/login');
+      }
     }
   }, [session, loading]);
 

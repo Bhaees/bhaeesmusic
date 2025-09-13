@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
-import { supabase, getUserProfile } from '@/lib/supabase';
+import { auth, getUserProfile } from '@/lib/supabase';
 import { User } from '@/types/database';
 
 interface AuthContextType {
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         getUserProfile(session.user.id).then(({ data }) => {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         if (session?.user) {
@@ -57,38 +57,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await auth.signUp({
       email,
       password,
     });
     
+    // For demo mode, simulate successful signup
     if (data.user && !error) {
-      await supabase
-        .from('users')
-        .insert([
-          {
-            id: data.user.id,
-            email,
-            credits: 0,
-            subscription_plan: 'free',
-            role: 'user',
-          }
-        ]);
+      // In demo mode, we'll simulate the user creation
+      setUser({
+        id: data.user.id,
+        email,
+        credits: 10, // Give demo users some credits
+        subscription_plan: 'free',
+        role: 'user',
+        created_at: new Date().toISOString()
+      });
+      setSession({ user: data.user } as Session);
     }
     
     return { error };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await auth.signInWithPassword({
       email,
       password,
     });
+    
+    // For demo mode, simulate successful signin
+    if (data.user && !error) {
+      setUser({
+        id: data.user.id,
+        email,
+        credits: 10, // Give demo users some credits
+        subscription_plan: 'free',
+        role: 'user',
+        created_at: new Date().toISOString()
+      });
+      setSession({ user: data.user } as Session);
+    }
+    
     return { error };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await auth.signOut();
+    setUser(null);
+    setSession(null);
   };
 
   return (

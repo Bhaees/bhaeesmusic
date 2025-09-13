@@ -75,6 +75,32 @@ const isSupabaseConfigured = () => {
     !supabaseAnonKey.includes('your-anon-key');
 };
 
+// Create a mock auth object for demo mode
+const createMockAuth = () => ({
+  getSession: async () => ({ data: { session: null }, error: null }),
+  onAuthStateChange: (callback: any) => {
+    // Call callback immediately with no session for demo
+    callback('SIGNED_OUT', null);
+    return { data: { subscription: { unsubscribe: () => {} } } };
+  },
+  signUp: async (credentials: any) => ({
+    data: { user: { id: 'demo-user', email: credentials.email } },
+    error: null
+  }),
+  signInWithPassword: async (credentials: any) => ({
+    data: { user: { id: 'demo-user', email: credentials.email } },
+    error: null
+  }),
+  signOut: async () => ({ error: null }),
+  getUser: async () => ({
+    data: { user: { id: 'demo-user', email: 'demo@example.com' } },
+    error: null
+  })
+});
+
+// Export auth object - either real Supabase auth or mock auth
+export const auth = isSupabaseConfigured() ? supabase!.auth : createMockAuth();
+
 // Auth helper functions
 export const signUp = async (email: string, password: string) => {
   if (!isSupabaseConfigured()) {
@@ -84,14 +110,14 @@ export const signUp = async (email: string, password: string) => {
     };
   }
 
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabase!.auth.signUp({
     email,
     password,
   });
   
   if (data.user && !error) {
     // Create user profile
-    await supabase
+    await supabase!
       .from('users')
       .insert([
         {
@@ -115,7 +141,7 @@ export const signIn = async (email: string, password: string) => {
     };
   }
 
-  return await supabase.auth.signInWithPassword({
+  return await supabase!.auth.signInWithPassword({
     email,
     password,
   });
@@ -126,7 +152,7 @@ export const signOut = async () => {
     return { error: null };
   }
 
-  return await supabase.auth.signOut();
+  return await supabase!.auth.signOut();
 };
 
 // Music functions
@@ -136,7 +162,7 @@ export const getSongs = async () => {
     return { data: DEMO_SONGS, error: null };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from('songs')
     .select('*')
     .order('created_at', { ascending: false });
@@ -155,7 +181,7 @@ export const searchSongs = async (query: string) => {
     return { data: filteredSongs, error: null };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from('songs')
     .select('*')
     .or(`title.ilike.%${query}%,artist.ilike.%${query}%,album.ilike.%${query}%`)
@@ -170,7 +196,7 @@ export const getUserDownloads = async (userId: string) => {
     return { data: [], error: null };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from('downloads')
     .select(`
       *,
@@ -190,7 +216,7 @@ export const downloadSong = async (songId: string) => {
     };
   }
 
-  const { data, error } = await supabase.rpc('handle_song_download', {
+  const { data, error } = await supabase!.rpc('handle_song_download', {
     song_uuid: songId
   });
   
@@ -212,7 +238,7 @@ export const getUserProfile = async (userId: string) => {
     };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from('users')
     .select('*')
     .eq('id', userId)
@@ -226,11 +252,11 @@ export const createTransaction = async (plan: string, amount: number, creditsAdd
     return { data: null, error: null };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase!.auth.getUser();
   
   if (!user) throw new Error('User not authenticated');
   
-  const { data, error } = await supabase
+  const { data, error } = await supabase!
     .from('transactions')
     .insert([
       {
