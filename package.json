@@ -2,7 +2,6 @@
   "name": "bhaebeats",
   "version": "1.0.0",
   "main": "expo-router/entry",
-  "private": true,
   "scripts": {
     "start": "expo start",
     "dev": "expo start",
@@ -11,7 +10,6 @@
     "web": "expo start --web"
   },
   "dependencies": {
-<<<<<<< HEAD
     "@react-native-community/netinfo": "11.4.1",
     "@supabase/supabase-js": "^2.38.0",
     "expo": "^53.0.0",
@@ -26,31 +24,6 @@
     "react-native-gesture-handler": "~2.20.2",
     "react-native-reanimated": "~3.16.1",
     "react-native-safe-area-context": "4.12.0",
-    "react-native-screens": "~4.4.0"
-=======
-    "@expo/config-plugins": "~10.1.1",
-    "@react-native-community/netinfo": "11.4.1",
-    "@supabase/supabase-js": "^2.38.0",
-    "@types/react": "~19.0.10",
-    "expo": "~53.0.0",
-    "expo-auth-session": "~6.2.1",
-    "expo-av": "~15.1.7",
-    "expo-file-system": "~18.1.11",
-    "expo-font": "~13.3.2",
-    "expo-router": "~5.1.6",
-    "expo-web-browser": "~14.2.0",
-    "metro": "^0.82.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "react-native": "0.79.5",
-    "react-native-fs": "^2.20.0",
-    "typescript": "~5.8.3"
->>>>>>> 0fb5afd (update to BhaeBeats branding)
-  },
-  "devDependencies": {
-    "@babel/core": "^7.24.0",
-    "typescript": "~5.8.3",
-    "@types/react": "~19.0.10",
-    "@types/react-native": "~0.79.0"
+    "react-native-screens": "~4.0.0"
   }
 }
