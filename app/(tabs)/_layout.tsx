@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Search, Download, User } from 'lucide-react-native';
+import { Chrome as Home, Search, Download, User } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { Redirect, router } from 'expo-router';
 import { useEffect } from 'react';
