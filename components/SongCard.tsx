@@ -45,7 +45,7 @@ export default function SongCard({
     }
 
     if (!user || user.credits < 1) {
-      alert('Insufficient credits. Please purchase more credits to download songs.');
+      console.log('Insufficient credits. Please purchase more credits to download songs.');
       return;
     }
 
@@ -53,18 +53,18 @@ export default function SongCard({
       const { data, error } = await downloadSong(song.id);
       
       if (error) {
-        alert('Error downloading song: ' + error.message);
+        console.log('Error downloading song: ' + error.message);
         return;
       }
 
       if (data?.success) {
-        alert('Song downloaded successfully!');
+        console.log('Song downloaded successfully!');
         refreshUser();
       } else {
-        alert(data?.error || 'Failed to download song');
+        console.log(data?.error || 'Failed to download song');
       }
     } catch (error) {
-      alert('Error downloading song');
+      console.log('Error downloading song');
       console.error(error);
     }
   };
