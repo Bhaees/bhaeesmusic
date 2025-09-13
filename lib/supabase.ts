@@ -59,14 +59,20 @@ const DEMO_SONGS: Song[] = [
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// Only create Supabase client if credentials are provided
-export const supabase = supabaseUrl && supabaseAnonKey 
+// Only create Supabase client if real credentials are provided (not placeholders)
+export const supabase = supabaseUrl && supabaseAnonKey && 
+  !supabaseUrl.includes('your-project') && 
+  !supabaseAnonKey.includes('your-anon-key')
   ? createClient<Database>(supabaseUrl, supabaseAnonKey)
   : null;
 
 // Check if Supabase is configured
 const isSupabaseConfigured = () => {
-  return supabase !== null;
+  return supabase !== null && 
+    supabaseUrl && 
+    supabaseAnonKey && 
+    !supabaseUrl.includes('your-project') && 
+    !supabaseAnonKey.includes('your-anon-key');
 };
 
 // Auth helper functions
