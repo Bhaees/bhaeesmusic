@@ -44,7 +44,7 @@ export default function SearchScreen() {
 
   return (
     <>
-      <LinearGradient colors={['#1a1a1a', '#2d1b69']} style={styles.container}>
+      <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Search</Text>
           

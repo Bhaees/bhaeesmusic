@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <LinearGradient colors={['#1a1a1a', '#2d1b69']} style={styles.container}>
+      <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.loadingContainer}>
           <Logo size="large" />
           <Text style={styles.loadingText}>Loading music...</Text>
@@ -55,7 +55,7 @@ export default function HomeScreen() {
 
   return (
     <>
-      <LinearGradient colors={['#1a1a1a', '#2d1b69']} style={styles.container}>
+      <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.header}>
           <Logo size="medium" showText={false} />
           <Text style={styles.title}>BhaeBeats</Text>

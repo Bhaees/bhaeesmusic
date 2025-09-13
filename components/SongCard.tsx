@@ -124,10 +124,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(20, 20, 20, 0.8)',
+    backdropFilter: 'blur(10px)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     marginBottom: 8,
     borderRadius: 8,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   cover: {
     width: 60,

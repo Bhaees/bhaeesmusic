@@ -96,7 +96,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       // Create and play new sound
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: song.file_url },
-        { shouldPlay: true }
+        { 
+          shouldPlay: true,
+          volume: 1.0,
+          rate: 1.0,
+          shouldCorrectPitch: true,
+        }
       );
 
       setSound(newSound);
@@ -104,6 +109,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setIsPlaying(true);
     } catch (error) {
       console.error('Error playing song:', error);
+      // Try to continue with next song if current fails
+      if (newQueue && newQueue.length > 1) {
+        const nextIndex = (currentIndex + 1) % newQueue.length;
+        const nextSong = newQueue[nextIndex];
+        if (nextSong && nextSong.id !== song.id) {
+          setTimeout(() => playSong(nextSong, newQueue), 1000);
+        }
+      }
     }
   };
 

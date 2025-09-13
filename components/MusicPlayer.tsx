@@ -125,10 +125,19 @@ export default function MusicPlayer() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+    backdropFilter: 'blur(20px)',
     borderTopWidth: 1,
-    borderTopColor: '#333',
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
     paddingTop: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 10,
   },
   progressContainer: {
     paddingHorizontal: 16,

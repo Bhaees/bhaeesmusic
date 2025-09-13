@@ -24,10 +24,19 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#1a1a1a',
-          borderTopColor: '#333',
+          backgroundColor: 'rgba(10, 10, 10, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderTopColor: 'rgba(255, 255, 255, 0.1)',
           height: 60,
           paddingBottom: 8,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: -2,
+          },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+          elevation: 8,
         },
         tabBarActiveTintColor: '#1DB954',
         tabBarInactiveTintColor: '#b3b3b3',
