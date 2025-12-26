@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User as SupabaseUser } from '@supabase/supabase-js';
-import { auth, getUserProfile } from '@/lib/supabase';
+import { auth, getUserProfile, signUp as supabaseSignUp, signIn as supabaseSignIn } from '@/lib/supabase';
 import { User } from '@/types/database';
 
 interface AuthContextType {
@@ -57,48 +57,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await auth.signUp({
-      email,
-      password,
-    });
-    
-    // For demo mode, simulate successful signup
-    if (data.user && !error) {
-      // In demo mode, we'll simulate the user creation
-      setUser({
-        id: data.user.id,
-        email,
-        credits: 10, // Give demo users some credits
-        subscription_plan: 'free',
-        role: 'user',
-        created_at: new Date().toISOString()
-      });
-      setSession({ user: data.user } as Session);
-    }
-    
-    return { error };
+    return await supabaseSignUp(email, password);
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    // For demo mode, simulate successful signin
-    if (data.user && !error) {
-      setUser({
-        id: data.user.id,
-        email,
-        credits: 10, // Give demo users some credits
-        subscription_plan: 'free',
-        role: 'user',
-        created_at: new Date().toISOString()
-      });
-      setSession({ user: data.user } as Session);
-    }
-    
-    return { error };
+    return await supabaseSignIn(email, password);
   };
 
   const signOut = async () => {

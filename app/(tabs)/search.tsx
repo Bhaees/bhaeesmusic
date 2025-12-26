@@ -2,17 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search as SearchIcon } from 'lucide-react-native';
-import { searchSongs } from '@/lib/supabase';
+import { searchSongs, getUserDownloads } from '@/lib/supabase';
 import { Song } from '@/types/database';
 import SongCard from '@/components/SongCard';
 import MusicPlayer from '@/components/MusicPlayer';
 import { useMusic } from '@/contexts/MusicContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Song[]>([]);
+  const [downloadedSongIds, setDownloadedSongIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const { setQueue } = useMusic();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchDownloads = async () => {
+      if (user) {
+        const { data: downloads } = await getUserDownloads(user.id);
+        if (downloads) {
+          const ids = new Set(downloads.map(d => d.song_id));
+          setDownloadedSongIds(ids);
+        }
+      }
+    };
+    fetchDownloads();
+  }, [user]);
 
   useEffect(() => {
     if (query.trim() === '') {
@@ -79,6 +95,7 @@ export default function SearchScreen() {
                 key={song.id}
                 song={song}
                 showDownload
+                isDownloaded={downloadedSongIds.has(song.id)}
                 onPlayPress={() => handlePlaySong(song)}
               />
             ))}

@@ -116,18 +116,22 @@ export const signUp = async (email: string, password: string) => {
   });
   
   if (data.user && !error) {
-    // Create user profile
-    await supabase!
+    // Create user profile with starter credits
+    const { error: insertError } = await supabase!
       .from('users')
       .insert([
         {
           id: data.user.id,
           email,
-          credits: 0,
+          credits: 5,
           subscription_plan: 'free',
           role: 'user',
         }
       ]);
+
+    if (insertError) {
+      console.error('Error creating user profile:', insertError);
+    }
   }
   
   return { data, error };

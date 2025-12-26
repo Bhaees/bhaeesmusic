@@ -1,24 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getSongs } from '@/lib/supabase';
+import { getSongs, getUserDownloads } from '@/lib/supabase';
 import { Song } from '@/types/database';
 import SongCard from '@/components/SongCard';
 import MusicPlayer from '@/components/MusicPlayer';
 import Logo from '@/components/Logo';
 import { useMusic } from '@/contexts/MusicContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomeScreen() {
   const [songs, setSongs] = useState<Song[]>([]);
+  const [downloadedSongIds, setDownloadedSongIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { setQueue } = useMusic();
+  const { user } = useAuth();
 
   const fetchSongs = async () => {
     try {
       const { data, error } = await getSongs();
       if (data) {
         setSongs(data);
+      }
+
+      if (user) {
+        const { data: downloads } = await getUserDownloads(user.id);
+        if (downloads) {
+          const ids = new Set(downloads.map(d => d.song_id));
+          setDownloadedSongIds(ids);
+        }
       }
     } catch (error) {
       console.error('Error fetching songs:', error);
@@ -30,7 +41,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchSongs();
-  }, []);
+  }, [user]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -85,6 +96,7 @@ export default function HomeScreen() {
                     key={song.id}
                     song={song}
                     showDownload
+                    isDownloaded={downloadedSongIds.has(song.id)}
                     onPlayPress={() => handlePlaySong(song)}
                   />
                 ))}

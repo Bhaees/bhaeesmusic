@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Play, Download as DownloadIcon, Check } from 'lucide-react-native';
 import { Song } from '@/types/database';
 import { useMusic } from '@/contexts/MusicContext';
@@ -45,26 +45,26 @@ export default function SongCard({
     }
 
     if (!user || user.credits < 1) {
-      console.log('Insufficient credits. Please purchase more credits to download songs.');
+      Alert.alert('Insufficient Credits', 'Please purchase more credits to download songs.');
       return;
     }
 
     try {
       const { data, error } = await downloadSong(song.id);
-      
+
       if (error) {
-        console.log('Error downloading song: ' + error.message);
+        Alert.alert('Error', error.message || 'Failed to download song');
         return;
       }
 
       if (data?.success) {
-        console.log('Song downloaded successfully!');
+        Alert.alert('Success', `Song downloaded! You have ${data.remaining_credits} credits remaining.`);
         refreshUser();
       } else {
-        console.log(data?.error || 'Failed to download song');
+        Alert.alert('Error', data?.error || 'Failed to download song');
       }
     } catch (error) {
-      console.log('Error downloading song');
+      Alert.alert('Error', 'An unexpected error occurred while downloading the song');
       console.error(error);
     }
   };
