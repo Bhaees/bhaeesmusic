@@ -45,3 +45,30 @@ export interface CreditPlan {
   price: number;
   description: string;
 }
+
+export interface Favorite {
+  id: string;
+  user_id: string;
+  song_id: string;
+  created_at: string;
+  song?: Song;
+}
+
+export interface Playlist {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  song_count?: number;
+}
+
+export interface PlaylistSong {
+  id: string;
+  playlist_id: string;
+  song_id: string;
+  position: number;
+  added_at: string;
+  song?: Song;
+}

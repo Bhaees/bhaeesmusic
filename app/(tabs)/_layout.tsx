@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Chrome as Home, Search, Download, User } from 'lucide-react-native';
+import { Chrome as Home, Search, Download, User, Heart, Music } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
@@ -56,6 +56,24 @@ export default function TabLayout() {
           title: 'Search',
           tabBarIcon: ({ size, color }) => (
             <Search size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="favorites"
+        options={{
+          title: 'Favorites',
+          tabBarIcon: ({ size, color }) => (
+            <Heart size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="playlists"
+        options={{
+          title: 'Playlists',
+          tabBarIcon: ({ size, color }) => (
+            <Music size={size} color={color} />
           ),
         }}
       />

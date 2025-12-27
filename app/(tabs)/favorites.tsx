@@ -1,38 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getSongs, getUserDownloads } from '@/lib/supabase';
-import { Song } from '@/types/database';
+import { Heart } from 'lucide-react-native';
+import { getFavorites } from '@/lib/supabase';
+import { Favorite } from '@/types/database';
 import SongCard from '@/components/SongCard';
 import MusicPlayer from '@/components/MusicPlayer';
-import Logo from '@/components/Logo';
 import { useMusic } from '@/contexts/MusicContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function HomeScreen() {
-  const [songs, setSongs] = useState<Song[]>([]);
-  const [downloadedSongIds, setDownloadedSongIds] = useState<Set<string>>(new Set());
+export default function FavoritesScreen() {
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { setQueue } = useMusic();
   const { user } = useAuth();
 
-  const fetchSongs = async () => {
-    try {
-      const { data, error } = await getSongs();
-      if (data) {
-        setSongs(data);
-      }
+  const fetchFavorites = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-      if (user) {
-        const { data: downloads } = await getUserDownloads(user.id);
-        if (downloads) {
-          const ids = new Set(downloads.map(d => d.song_id));
-          setDownloadedSongIds(ids);
-        }
+    try {
+      const { data, error } = await getFavorites(user.id);
+      if (data) {
+        setFavorites(data);
       }
     } catch (error) {
-      console.error('Error fetching songs:', error);
+      console.error('Error fetching favorites:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -40,25 +36,38 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    fetchSongs();
+    fetchFavorites();
   }, [user]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchSongs();
+    fetchFavorites();
   };
 
-  const handlePlaySong = (song: Song) => {
-    const songIndex = songs.findIndex(s => s.id === song.id);
-    setQueue(songs, songIndex);
+  const handlePlaySong = (index: number) => {
+    const songs = favorites.map(f => f.song!).filter(s => s);
+    setQueue(songs, index);
   };
+
+  const handleFavoriteRemoved = () => {
+    fetchFavorites();
+  };
+
+  if (!user) {
+    return (
+      <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
+        <View style={styles.messageContainer}>
+          <Text style={styles.messageText}>Please log in to view your favorites</Text>
+        </View>
+      </LinearGradient>
+    );
+  }
 
   if (loading) {
     return (
       <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Logo size="large" />
-          <Text style={styles.loadingText}>Loading music...</Text>
+          <Text style={styles.loadingText}>Loading favorites...</Text>
         </View>
       </LinearGradient>
     );
@@ -68,9 +77,9 @@ export default function HomeScreen() {
     <>
       <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.header}>
-          <Logo size="medium" showText={false} />
-          <Text style={styles.title}>BhaeBeats</Text>
-          <Text style={styles.subtitle}>Discover amazing music</Text>
+          <Heart size={32} color="#FF4458" fill="#FF4458" />
+          <Text style={styles.title}>Favorites</Text>
+          <Text style={styles.subtitle}>{favorites.length} songs</Text>
         </View>
 
         <ScrollView
@@ -80,29 +89,26 @@ export default function HomeScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {songs.length === 0 ? (
+          {favorites.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No songs available</Text>
+              <Heart size={48} color="#666" />
+              <Text style={styles.emptyText}>No favorites yet</Text>
               <Text style={styles.emptySubtext}>
-                Pull down to refresh or check back later
+                Mark songs as favorites to see them here
               </Text>
             </View>
           ) : (
-            <>
-              <Text style={styles.sectionTitle}>Featured Songs</Text>
-              <View style={styles.songsContainer}>
-                {songs.map((song) => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    showDownload
-                    showFavorite
-                    isDownloaded={downloadedSongIds.has(song.id)}
-                    onPlayPress={() => handlePlaySong(song)}
-                  />
-                ))}
-              </View>
-            </>
+            <View style={styles.songsContainer}>
+              {favorites.map((favorite, index) => (
+                <SongCard
+                  key={favorite.id}
+                  song={favorite.song!}
+                  showFavorite
+                  onPlayPress={() => handlePlaySong(index)}
+                  onFavoriteToggle={handleFavoriteRemoved}
+                />
+              ))}
+            </View>
           )}
         </ScrollView>
       </LinearGradient>
@@ -140,19 +146,23 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#fff',
     fontSize: 18,
-    marginTop: 20,
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  messageText: {
+    color: '#b3b3b3',
+    fontSize: 18,
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
   },
   content: {
     padding: 16,
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 16,
   },
   emptyContainer: {
     flex: 1,
@@ -165,13 +175,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 8,
+    marginTop: 16,
   },
   emptySubtext: {
     color: '#b3b3b3',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 22,
+    marginTop: 8,
   },
   songsContainer: {
     gap: 8,

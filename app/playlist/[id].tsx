@@ -1,27 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { getSongs, getUserDownloads } from '@/lib/supabase';
-import { Song } from '@/types/database';
+import { ArrowLeft, Plus } from 'lucide-react-native';
+import { getPlaylistSongs, getUserDownloads } from '@/lib/supabase';
+import { PlaylistSong } from '@/types/database';
 import SongCard from '@/components/SongCard';
 import MusicPlayer from '@/components/MusicPlayer';
-import Logo from '@/components/Logo';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMusic } from '@/contexts/MusicContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function HomeScreen() {
-  const [songs, setSongs] = useState<Song[]>([]);
+export default function PlaylistDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const [playlistSongs, setPlaylistSongs] = useState<PlaylistSong[]>([]);
   const [downloadedSongIds, setDownloadedSongIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const { setQueue } = useMusic();
   const { user } = useAuth();
 
-  const fetchSongs = async () => {
+  const fetchPlaylistSongs = async () => {
+    if (!id) return;
+
     try {
-      const { data, error } = await getSongs();
+      const { data, error } = await getPlaylistSongs(id);
       if (data) {
-        setSongs(data);
+        setPlaylistSongs(data);
       }
 
       if (user) {
@@ -32,7 +37,8 @@ export default function HomeScreen() {
         }
       }
     } catch (error) {
-      console.error('Error fetching songs:', error);
+      console.error('Error fetching playlist songs:', error);
+      Alert.alert('Error', 'Failed to load playlist');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -40,25 +46,24 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    fetchSongs();
-  }, [user]);
+    fetchPlaylistSongs();
+  }, [id, user]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchSongs();
+    fetchPlaylistSongs();
   };
 
-  const handlePlaySong = (song: Song) => {
-    const songIndex = songs.findIndex(s => s.id === song.id);
-    setQueue(songs, songIndex);
+  const handlePlaySong = (index: number) => {
+    const songs = playlistSongs.map(ps => ps.song).filter(s => s) as any[];
+    setQueue(songs, index);
   };
 
   if (loading) {
     return (
       <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.loadingContainer}>
-          <Logo size="large" />
-          <Text style={styles.loadingText}>Loading music...</Text>
+          <Text style={styles.loadingText}>Loading playlist...</Text>
         </View>
       </LinearGradient>
     );
@@ -68,9 +73,11 @@ export default function HomeScreen() {
     <>
       <LinearGradient colors={['#0a0a0a', '#1a1a1a', '#0f0f0f']} style={styles.container}>
         <View style={styles.header}>
-          <Logo size="medium" showText={false} />
-          <Text style={styles.title}>BhaeBeats</Text>
-          <Text style={styles.subtitle}>Discover amazing music</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Playlist</Text>
+          <Text style={styles.subtitle}>{playlistSongs.length} songs</Text>
         </View>
 
         <ScrollView
@@ -80,29 +87,25 @@ export default function HomeScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {songs.length === 0 ? (
+          {playlistSongs.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No songs available</Text>
+              <Text style={styles.emptyText}>No songs in this playlist</Text>
               <Text style={styles.emptySubtext}>
-                Pull down to refresh or check back later
+                Add songs from the home or search screens
               </Text>
             </View>
           ) : (
-            <>
-              <Text style={styles.sectionTitle}>Featured Songs</Text>
-              <View style={styles.songsContainer}>
-                {songs.map((song) => (
-                  <SongCard
-                    key={song.id}
-                    song={song}
-                    showDownload
-                    showFavorite
-                    isDownloaded={downloadedSongIds.has(song.id)}
-                    onPlayPress={() => handlePlaySong(song)}
-                  />
-                ))}
-              </View>
-            </>
+            <View style={styles.songsContainer}>
+              {playlistSongs.map((playlistSong, index) => (
+                <SongCard
+                  key={playlistSong.id}
+                  song={playlistSong.song!}
+                  showFavorite
+                  isDownloaded={downloadedSongIds.has(playlistSong.song_id)}
+                  onPlayPress={() => handlePlaySong(index)}
+                />
+              ))}
+            </View>
           )}
         </ScrollView>
       </LinearGradient>
@@ -120,12 +123,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
     alignItems: 'center',
+    flexDirection: 'column',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 16,
+    top: 60,
+    padding: 8,
   },
   title: {
     color: '#fff',
     fontSize: 28,
     fontWeight: 'bold',
-    marginTop: 12,
+    marginTop: 20,
   },
   subtitle: {
     color: '#b3b3b3',
@@ -140,19 +150,12 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#fff',
     fontSize: 18,
-    marginTop: 20,
   },
   scrollView: {
     flex: 1,
   },
   content: {
     padding: 16,
-  },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 16,
   },
   emptyContainer: {
     flex: 1,
@@ -165,13 +168,13 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 8,
   },
   emptySubtext: {
     color: '#b3b3b3',
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 22,
+    marginTop: 8,
   },
   songsContainer: {
     gap: 8,

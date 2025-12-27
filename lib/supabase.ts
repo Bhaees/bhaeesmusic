@@ -257,9 +257,9 @@ export const createTransaction = async (plan: string, amount: number, creditsAdd
   }
 
   const { data: { user } } = await supabase!.auth.getUser();
-  
+
   if (!user) throw new Error('User not authenticated');
-  
+
   const { data, error } = await supabase!
     .from('transactions')
     .insert([
@@ -272,6 +272,250 @@ export const createTransaction = async (plan: string, amount: number, creditsAdd
         payment_status: 'pending'
       }
     ]);
-  
+
   return { data, error };
+};
+
+export const getFavorites = async (userId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: [], error: null };
+  }
+
+  const { data, error } = await supabase!
+    .from('favorites')
+    .select(`
+      *,
+      song:songs(*)
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  return { data, error };
+};
+
+export const toggleFavorite = async (songId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: { isFavorited: true }, error: null };
+  }
+
+  const { data: { user } } = await supabase!.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data: existing } = await supabase!
+    .from('favorites')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('song_id', songId)
+    .maybeSingle();
+
+  if (existing) {
+    const { error } = await supabase!
+      .from('favorites')
+      .delete()
+      .eq('id', existing.id);
+    return { data: { isFavorited: false }, error };
+  } else {
+    const { error } = await supabase!
+      .from('favorites')
+      .insert([{ user_id: user.id, song_id: songId }]);
+    return { data: { isFavorited: true }, error };
+  }
+};
+
+export const isFavoriteSong = async (songId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: false, error: null };
+  }
+
+  const { data: { user } } = await supabase!.auth.getUser();
+  if (!user) return { data: false, error: null };
+
+  const { data, error } = await supabase!
+    .from('favorites')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('song_id', songId)
+    .maybeSingle();
+
+  return { data: !!data, error };
+};
+
+export const getUserPlaylists = async (userId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: [], error: null };
+  }
+
+  const { data, error } = await supabase!
+    .from('playlists')
+    .select(`
+      *,
+      playlist_songs(count)
+    `)
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false });
+
+  const playlists = data?.map(p => ({
+    ...p,
+    song_count: p.playlist_songs?.[0]?.count || 0
+  }));
+
+  return { data: playlists || [], error };
+};
+
+export const createPlaylist = async (name: string, description?: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: null };
+  }
+
+  const { data: { user } } = await supabase!.auth.getUser();
+  if (!user) throw new Error('User not authenticated');
+
+  const { data, error } = await supabase!
+    .from('playlists')
+    .insert([{
+      user_id: user.id,
+      name,
+      description: description || null
+    }])
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+export const updatePlaylist = async (playlistId: string, name: string, description?: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: null };
+  }
+
+  const { data, error } = await supabase!
+    .from('playlists')
+    .update({
+      name,
+      description: description || null,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', playlistId)
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+export const deletePlaylist = async (playlistId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { error: null };
+  }
+
+  const { error } = await supabase!
+    .from('playlists')
+    .delete()
+    .eq('id', playlistId);
+
+  return { error };
+};
+
+export const getPlaylistSongs = async (playlistId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: [], error: null };
+  }
+
+  const { data, error } = await supabase!
+    .from('playlist_songs')
+    .select(`
+      *,
+      song:songs(*)
+    `)
+    .eq('playlist_id', playlistId)
+    .order('position');
+
+  return { data, error };
+};
+
+export const addSongToPlaylist = async (playlistId: string, songId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { data: null, error: null };
+  }
+
+  const { data: maxPosition } = await supabase!
+    .from('playlist_songs')
+    .select('position')
+    .eq('playlist_id', playlistId)
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const nextPosition = (maxPosition?.position || 0) + 1;
+
+  const { data, error } = await supabase!
+    .from('playlist_songs')
+    .insert([{
+      playlist_id: playlistId,
+      song_id: songId,
+      position: nextPosition
+    }])
+    .select()
+    .single();
+
+  return { data, error };
+};
+
+export const removeSongFromPlaylist = async (playlistSongId: string) => {
+  if (!isSupabaseConfigured()) {
+    return { error: null };
+  }
+
+  const { error } = await supabase!
+    .from('playlist_songs')
+    .delete()
+    .eq('id', playlistSongId);
+
+  return { error };
+};
+
+export const getDownloadStats = async (userId: string) => {
+  if (!isSupabaseConfigured()) {
+    return {
+      data: {
+        total_downloads: 0,
+        total_credits_spent: 0,
+        favorite_artist: null
+      },
+      error: null
+    };
+  }
+
+  const { data: downloads, error: downloadError } = await supabase!
+    .from('downloads')
+    .select(`
+      id,
+      song:songs(artist)
+    `)
+    .eq('user_id', userId);
+
+  if (downloadError || !downloads) {
+    return { data: null, error: downloadError };
+  }
+
+  const artistCounts: Record<string, number> = {};
+  let favorite_artist = null;
+  let maxCount = 0;
+
+  downloads.forEach(d => {
+    if (d.song?.artist) {
+      artistCounts[d.song.artist] = (artistCounts[d.song.artist] || 0) + 1;
+      if (artistCounts[d.song.artist] > maxCount) {
+        maxCount = artistCounts[d.song.artist];
+        favorite_artist = d.song.artist;
+      }
+    }
+  });
+
+  const data = {
+    total_downloads: downloads.length,
+    total_credits_spent: downloads.length,
+    favorite_artist
+  };
+
+  return { data, error: null };
 };

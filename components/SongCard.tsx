@@ -1,28 +1,67 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Play, Download as DownloadIcon, Check } from 'lucide-react-native';
+import { Play, Download as DownloadIcon, Check, Heart } from 'lucide-react-native';
 import { Song } from '@/types/database';
 import { useMusic } from '@/contexts/MusicContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { downloadSong } from '@/lib/supabase';
+import { downloadSong, toggleFavorite, isFavoriteSong } from '@/lib/supabase';
 
 interface SongCardProps {
   song: Song;
   showDownload?: boolean;
+  showFavorite?: boolean;
   isDownloaded?: boolean;
   onPlayPress?: () => void;
   onDownloadPress?: () => void;
+  onFavoriteToggle?: (isFavorited: boolean) => void;
 }
 
-export default function SongCard({ 
-  song, 
-  showDownload = false, 
+export default function SongCard({
+  song,
+  showDownload = false,
+  showFavorite = false,
   isDownloaded = false,
   onPlayPress,
-  onDownloadPress 
+  onDownloadPress,
+  onFavoriteToggle
 }: SongCardProps) {
   const { playSong } = useMusic();
   const { user, refreshUser } = useAuth();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [checkingFavorite, setCheckingFavorite] = useState(false);
+
+  useEffect(() => {
+    if (showFavorite && user) {
+      checkFavoriteStatus();
+    }
+  }, [user, song.id, showFavorite]);
+
+  const checkFavoriteStatus = async () => {
+    setCheckingFavorite(true);
+    const { data } = await isFavoriteSong(song.id);
+    setIsFavorited(data || false);
+    setCheckingFavorite(false);
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      Alert.alert('Login Required', 'Please log in to favorite songs');
+      return;
+    }
+
+    setCheckingFavorite(true);
+    const { data, error } = await toggleFavorite(song.id);
+
+    if (error) {
+      Alert.alert('Error', 'Failed to toggle favorite');
+      setCheckingFavorite(false);
+      return;
+    }
+
+    setIsFavorited(data?.isFavorited || false);
+    onFavoriteToggle?.(data?.isFavorited || false);
+    setCheckingFavorite(false);
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -89,30 +128,47 @@ export default function SongCard({
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity 
-          style={styles.playButton} 
+        <TouchableOpacity
+          style={styles.playButton}
           onPress={handlePlay}
         >
           <Play size={20} color="#fff" fill="#fff" />
         </TouchableOpacity>
-        
+
         {showDownload && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.downloadButton,
               isDownloaded && styles.downloadedButton
-            ]} 
+            ]}
             onPress={handleDownload}
             disabled={isDownloaded || (user?.credits || 0) < 1}
           >
             {isDownloaded ? (
               <Check size={20} color="#1DB954" />
             ) : (
-              <DownloadIcon 
-                size={20} 
-                color={(user?.credits || 0) < 1 ? "#666" : "#fff"} 
+              <DownloadIcon
+                size={20}
+                color={(user?.credits || 0) < 1 ? "#666" : "#fff"}
               />
             )}
+          </TouchableOpacity>
+        )}
+
+        {showFavorite && (
+          <TouchableOpacity
+            style={[
+              styles.favoriteButton,
+              isFavorited && styles.favoritedButton
+            ]}
+            onPress={handleFavoriteToggle}
+            disabled={checkingFavorite}
+          >
+            <Heart
+              size={20}
+              color={isFavorited ? "#FF4458" : "#666"}
+              fill={isFavorited ? "#FF4458" : "none"}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -194,5 +250,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
     borderWidth: 1,
     borderColor: '#1DB954',
+  },
+  favoriteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#333',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoritedButton: {
+    backgroundColor: '#1a1a1a',
+    borderWidth: 1,
+    borderColor: '#FF4458',
   },
 });

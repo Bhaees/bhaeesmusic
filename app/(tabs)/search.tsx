@@ -95,6 +95,7 @@ export default function SearchScreen() {
                 key={song.id}
                 song={song}
                 showDownload
+                showFavorite
                 isDownloaded={downloadedSongIds.has(song.id)}
                 onPlayPress={() => handlePlaySong(song)}
               />
